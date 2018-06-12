@@ -4,9 +4,13 @@
 import re
 from typing import Optional, List
 
+import addict
 import lazy_property
 
 from parsso.namelist.default import all_names, all_namelists
+
+# ========================================= What can be exported? =========================================
+__all__ = ['NamelistVariable', 'Namelist']
 
 
 class NamelistVariable(object):
@@ -77,15 +81,36 @@ class NamelistVariable(object):
         return self.__index
 
     def __eq__(self, other: object) -> bool:
+        if not type(other) is NamelistVariable:
+            return False
+
         attributes = ['name', 'default_type', 'value', 'in_namelist']
         return all(getattr(self, attr) == getattr(other, attr) for attr in attributes)
 
     def __ne__(self, other: object) -> bool:
+        if not type(other) is NamelistVariable:
+            return False
+
         attributes = ['name', 'default_type', 'value', 'in_namelist']
         return any(getattr(self, attr) != getattr(other, attr) for attr in attributes)
 
 
-class Namelist(object):
+class Namelist(addict.Dict):
     def __init__(self, d):
         if not isinstance(d, dict):
-            raise TypeError()
+            raise TypeError("Argument *d* must be a dictionary!")
+
+        if not all(type(v) is NamelistVariable for v in d.values()):
+            raise TypeError("All values in *d* must be of type 'NamelistVariable'!")
+
+        benchmark = next(iter(d.values())).in_namelist
+        if not all(v.in_namelist == benchmark for v in d.values()):
+            raise ValueError("All values must be in the same namelist!")
+
+        self.__name = benchmark
+
+        super().__init__(d)
+
+    @property
+    def name(self) -> str:
+        return self.__name
