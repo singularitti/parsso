@@ -11,10 +11,10 @@ class Card(addict.Dict):
         if not isinstance(d, dict):
             raise TypeError
 
-        if set(d.keys()) <= {'values', 'option'}:
+        if set(d.keys()) <= {'data', 'option'}:
             raise KeyError
 
-        self.__data = d['values']
+        self.__data = d['data']
         self.__option = d['option']
 
         super().__init__(d)
